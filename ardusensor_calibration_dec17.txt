@@ -1,0 +1,32 @@
+
+setup: Firefly motors 3-8 statically tested in mocap studio (held in place with bricks). 
+
+test1: verify that sensors work by manually spinning the motors.
+
+test3: each step will be kept for at least 30 secs
+
+pwm test -c 3 -p 1200
+1:30    1200
+2:00    1300
+3:00    1400
+4:00    1500
+    1600
+    1700
+    1800
+    1900
+    2000 
+
+lower blade (m8) started to spin, test was stopped
+pwm test -c 3 -p 1200
+1:00    1200
+2:00    1300
+3:00    1400
+4:00    1500
+5:00    1600
+6:00    1700
+7:00    1800
+8:00    1900
+9:00    2000 
+
+test4: using RC
+
