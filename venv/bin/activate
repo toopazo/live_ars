@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/tzo4/Dropbox/tomas/pennState/avia/software/toopazo_ars/venv"
+VIRTUAL_ENV="/home/tzo4/Dropbox/tomas/pennState/avia/software/live_ars/venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

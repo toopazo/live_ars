@@ -689,7 +689,7 @@ if __name__ == '__main__':
     # [plot] mx_my m4_m7
     # [plot] total current pol(0.9389598227492725) 9.806386751461247, pol(1) 9.884968421081556
     # [plot] total power saving 0.7949612611075116
-    # [plot] delta current pol(0.9587683354816365) 0.0, pol(1) 0.6913387924237675
+    # [plot] del ta current pol(0.9587683354816365) 0.0, pol(1) 0.6913387924237675
     # [plot] mx_my m3_m8
     # [plot] total current pol(1.048917288994637) 10.335821625192285, pol(1) 10.3565844333112
     # [plot] total power saving 0.20047930138176856
