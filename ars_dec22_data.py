@@ -22,8 +22,10 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 28200
-    timebars_1 = [(2700, 4000), (8600, 15400)]
+    # timebars_1 = [(2700, 4000), (8600, 15400)]
     # timebars_2 = [(2700, 4000), (9000, 11000)]
+    # timebars_3 = [(343, 348), (370, 378)]
+    timebars_4 = [(345, 348), (388, 391)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -31,7 +33,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test2'
@@ -42,8 +44,10 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 20400
-    timebars_1 = [(2800, 5100), (9100, 15000)]
+    # timebars_1 = [(2800, 5100), (9100, 15000)]
     # timebars_2 = [(4000, 5000), (13200, 15000)]
+    # timebars_3 = [(110, 114), (143, 148)]
+    timebars_4 = [(116, 119), (155, 158)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -51,7 +55,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test3'
@@ -62,8 +66,10 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 23300
-    timebars_1 = [(2500, 5500), (9300, 15600)]
+    # timebars_1 = [(2500, 5500), (9300, 15600)]
     # timebars_2 = [(4000, 5500), (14000, 15600)]
+    # timebars_3 = [(90, 95), (125, 130)]
+    timebars_4 = [(92, 95), (135, 138)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -71,7 +77,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test4'
@@ -82,8 +88,9 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 20500
-    timebars_1 = [(2700, 5500), (11000, 20000)]
+    # timebars_1 = [(2700, 5500), (11000, 20000)]
     # timebars_2 = [(4000, 5600), (16000, 18000)]
+    timebars_4 = [(142, 145), (200, 203)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -91,7 +98,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test5'
@@ -102,8 +109,9 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 11100
-    timebars_1 = [(2200, 3700), (9200, 13300)]
+    # timebars_1 = [(2200, 3700), (9200, 13300)]
     # timebars_2 = [(2200, 3200), (11600, 13300)]
+    timebars_4 = [(85, 88), (124, 127)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -111,7 +119,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test6'
@@ -122,8 +130,9 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 68300
-    timebars_1 = [(2700, 8000), (13000, 19000)]
+    # timebars_1 = [(2700, 8000), (13000, 19000)]
     # timebars_2 = [(4100, 5700), (16200, 17800)]
+    timebars_4 = [(520, 523), (566, 569)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -131,7 +140,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
     testkey = 'test7'
     arsfile = bdir + '/' + 'logs/log_dec22_test7.ars'
@@ -141,8 +150,9 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 15000
-    timebars_1 = [(2700, 5500), (11000, 19700)]
+    # timebars_1 = [(2700, 5500), (11000, 19700)]
     # timebars_2 = [(3800, 5000), (16000, 18000)]
+    timebars_4 = [(99, 102), (160, 163)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -150,7 +160,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test8'
@@ -161,8 +171,9 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 41600
-    timebars_1 = [(2700, 6000), (10000, 21000)]
+    # timebars_1 = [(2700, 6000), (10000, 21000)]
     # timebars_2 = [(4000, 5300), (18000, 20000)]
+    timebars_4 = [(214, 217), (277, 280)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -170,7 +181,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test9'
@@ -181,8 +192,9 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 24500
-    timebars_1 = [(2700, 5000), (10000, 18000)]
+    # timebars_1 = [(2700, 5000), (10000, 18000)]
     # timebars_2 = [(3200, 4700), (15000, 17000)]
+    timebars_4 = [(136, 139), (195, 198)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -190,7 +202,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test10'
@@ -201,8 +213,9 @@ class ArsDec22Data:
     ylim_arr = np.array([[0, 1], [0, 3500], [0, 10]])
     units_arr = ['', 'rpm', 'A']
     arsoffset = 11200
-    timebars_1 = [(2700, 6500), (12000, 24000)]
+    # timebars_1 = [(2700, 6500), (12000, 24000)]
     # timebars_2 = [(5200, 6700), (17000, 20000)]
+    timebars_4 = [(110, 113), (184, 187)]
     test_db[testkey] = {
         'bdir': bdir,
         'arsfile': arsfile,
@@ -210,7 +223,7 @@ class ArsDec22Data:
         'ylim_arr': ylim_arr,
         'units_arr': units_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1
+        'timebars': timebars_4
     }
 
     testkey = 'test11'
@@ -224,8 +237,10 @@ class ArsDec22Data:
     # According to xcorr_dict arsoffset should be 19500,
     # but visually arsoffset equals to 18500 gives a better result
     arsoffset = 18500
-    timebars_1 = [(4000, 5000), (6300, 7100)]
+    # timebars_1 = [(4000, 5000), (6300, 7100)]
     # timebars_2 = [(4000, 5000), (6300, 7100)]
+    # timebars_3 = [(353, 356), (363, 366)]
+    timebars_4 = [(355, 358), (364, 367)]
     # text_xy0 = [(0.3, -0.8), (0.3, 1150), (0.3, 500), (0.3, 1.1)]
     text_xy0 = [(0.3, -0.8), (0.3, 500), (0.3, 1.1)]
     # transition = {'x0': 360.5, 'y0': 0.1, 'x1': 362, 'y1': 0.5}
@@ -238,7 +253,7 @@ class ArsDec22Data:
         'units_arr': units_arr,
         'xlim_arr': xlim_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1,
+        'timebars': timebars_4,
         'text_xy0': text_xy0,
         'transition': transition
     }
@@ -252,8 +267,10 @@ class ArsDec22Data:
     units_arr = ['', 'rpm', 'A']
     xlim_arr = np.array([70, 100])
     arsoffset = 19500
-    timebars_1 = [(4200, 4900), (5800, 6200)]
+    # timebars_1 = [(4200, 4900), (5800, 6200)]
     # timebars_2 = [(4200, 4900), (5800, 6200)]
+    # timebars_3 = [(86, 89), (92, 95)]
+    timebars_4 = [(86, 89), (92, 95)]
     # text_xy0 = [(0.3, -0.8), (0.3, 1150), (0.3, 500), (0.3, 1.1)]
     text_xy0 = [(0.3, -0.8), (0.3, 500), (0.3, 1.1)]
     # transition = {'x0': 91.5, 'y0': 0.1, 'x1': 92.5, 'y1': 0.7}
@@ -266,7 +283,7 @@ class ArsDec22Data:
         'units_arr': units_arr,
         'xlim_arr': xlim_arr,
         'arsoffset': arsoffset,
-        'timebars': timebars_1,
+        'timebars': timebars_4,
         'text_xy0': text_xy0,
         'transition': transition
     }

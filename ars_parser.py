@@ -2,23 +2,27 @@
 
 from toopazo_tools.matplotlib import FigureTools, PlotTools, plt
 from toopazo_tools.file_folder import FileFolderTools
-from toopazo_tools.time_series import TimeseriesTools
+from toopazo_tools.time_series import TimeseriesTools as tstools
+from toopazo_tools.data2d import Data2D
 from toopazo_ulg.file_parser import UlgParser
 from toopazo_ulg.plot_main import UlgMain
+
 
 from ars_dec22_data import ArsDec22Data
 
 import numpy as np
+import operator
 from scipy import stats
 import csv
 import argparse
 import pickle
-import time
+# import time
 # import serial
 # import pprint
 # import io
 # import signal
 # import sys
+import warnings
 import matplotlib
 matplotlib.rcParams.update({'font.size': 14})
 
@@ -71,6 +75,18 @@ class ArsParser:
         self.verbose = verbose
         self.load_data()
 
+    def plot_basic_ulgdata(self):
+        ulgfile = self.ulgfile
+        closefig = True
+        self.ulgmain.ulg_plot_basics.actuator_controls_0_0(ulgfile, closefig)
+        self.ulgmain.ulg_plot_basics.actuator_outputs_0(ulgfile, closefig)
+        self.ulgmain.ulg_plot_basics.vehicle_local_position_0(ulgfile, closefig)
+        self.ulgmain.ulg_plot_basics.manual_control_setpoint_0(ulgfile, closefig)
+        self.ulgmain.ulg_plot_basics.vehicle_rates_setpoint_0(ulgfile, closefig)
+        self.ulgmain.ulg_plot_basics.vehicle_attitude_0_deg(ulgfile, closefig)
+        self.ulgmain.ulg_plot_basics.nwindow_hover_pos(ulgfile, closefig)
+        self.ulgmain.ulg_plot_basics.nwindow_hover_vel(ulgfile, closefig)
+
     def load_data(self):
         self.rawdata = self.parse_file()
         self.caldata = self.calibrate_rawdata()
@@ -95,13 +111,13 @@ class ArsParser:
                       str(nchan)
                 print(arg)
 
-    def plot(self):
+    def plot_mixer_ulgdata(self):
         # pltdata = self.rawdata
         # pltdata = self.caldata
         pltdata = self.windata
 
-        self.plot_motors(pltdata)
-        self.plot_arms(pltdata)
+        # self.plot_motors(pltdata)
+        # self.plot_arms(pltdata)
 
         ulgfile = self.ulgfile
         if FileFolderTools.is_file(ulgfile):
@@ -337,7 +353,8 @@ class ArsParser:
         return movavg
 
     def plot_motors(self, pltdata):
-        closefig = True
+        fnctname = self.plot_motors.__name__
+
         for mpair in self.motor_pairs:
             for motor in mpair:
                 nchan = self.motor_to_channel(motor)
@@ -356,11 +373,9 @@ class ArsParser:
                 PlotTools.ax1_x2_y2_twinx(
                     ax_arr, x_arr, xlabel_arr, y_arr, ylabel_arr)
 
-                firstname = \
-                    self.arsfile_basename + '_' + self.plot_motors.__name__
-                lastname = '_m%s' % motor
-                filename = 'plots/' + firstname + lastname
-                FigureTools.savefig(filename, closefig)
+                motor1 = motor
+                motor2 = ''
+                self.save_plt(fnctname, motor1, motor2)
 
     def motor_to_channel(self, motor):
         return self.channel_arr[self.motor_arr.index(motor)]
@@ -369,7 +384,8 @@ class ArsParser:
         return self.motor_arr[self.channel_arr.index(nchan)]
 
     def plot_arms(self, pltdata):
-        closefig = True
+        fnctname = self.plot_arms.__name__
+
         for mpair in self.motor_pairs:
             motor1 = mpair[0]
             motor2 = mpair[1]
@@ -401,10 +417,8 @@ class ArsParser:
             PlotTools.ax1_x2_y2_twinx(
                 ax_arr, x_arr, xlabel_arr, y_arr, ylabel_arr)
 
-            firstname = self.arsfile_basename + '_' + self.plot_arms.__name__
-            lastname = '_m%s_m%s' % (motor1, motor2)
-            filename = 'plots/' + firstname + lastname + '_rpm'
-            FigureTools.savefig(filename, closefig)
+            motor2 = "%s_%s" % (motor2, 'rpm')
+            self.save_plt(fnctname, motor1, motor2)
 
             # Plot current
             [fig, ax_arr] = FigureTools.create_fig_axes(1, 1)
@@ -417,64 +431,152 @@ class ArsParser:
             PlotTools.ax1_x2_y2_twinx(
                 ax_arr, x_arr, xlabel_arr, y_arr, ylabel_arr)
 
-            firstname = self.arsfile_basename + '_' + self.plot_arms.__name__
-            lastname = '_m%s_m%s' % (motor1, motor2)
-            filename = 'plots/' + firstname + lastname + '_cur'
-            FigureTools.savefig(filename, closefig)
+            motor2 = "%s_%s" % (motor2, 'cur')
+            self.save_plt(fnctname, motor1, motor2)
 
             # plt.show()
 
-    def ulgfile_data(self):
-        [csvname, x, status, controls, output, pwm_limited] = \
+    def ulgfile_vehicle_attitude_0_deg(self):
+        [csvname, tva, roll, pitch, yaw] = \
+            UlgParser.get_vehicle_attitude_0_deg(self.ulgfile, self.tmpdir)
+
+        attitude = Data2D.to_np_array([roll, pitch, yaw])
+        maxnum_nan = 250
+        attitude = Data2D.search_and_replace_nan(attitude, maxnum_nan)
+
+        return [csvname, tva, attitude]
+
+    def ulgfile_vehicle_local_position_0(self):
+        [csvname, tvlp, px, py, pz, vx, vy, vz, ax, ay, az] = \
+            UlgParser.get_vehicle_local_position_0(self.ulgfile, self.tmpdir)
+
+        locpva = Data2D.to_np_array([px, py, pz, vx, vy, vz, ax, ay, az])
+        maxnum_nan = 250
+        locpva = Data2D.search_and_replace_nan(locpva, maxnum_nan)
+
+        return [csvname, tvlp, locpva]
+
+    def ulgfile_manual_control_setpoint_0(self):
+        [csvname, tmcs, y0, y1, y2, y3] = \
+            UlgParser.get_manual_control_setpoint_0(self.ulgfile, self.tmpdir)
+
+        manctrl = Data2D.to_np_array([y0, y1, y2, y3])
+        maxnum_nan = 250
+        manctrl = Data2D.search_and_replace_nan(manctrl, maxnum_nan)
+
+        return [csvname, tmcs, manctrl]
+
+    def ulgfile_actuator_controls_0_0(self):
+        [csvname, tac, y0, y1, y2, y3] = \
+            UlgParser.get_actuator_controls_0_0(self.ulgfile, self.tmpdir)
+
+        actctrl = Data2D.to_np_array([y0, y1, y2, y3])
+        maxnum_nan = 250
+        actctrl = Data2D.search_and_replace_nan(actctrl, maxnum_nan)
+
+        return [csvname, tac, actctrl]
+
+    def ulgfile_actuator_outputs_0(self):
+        [csvname, tao, y0, y1, y2, y3, y4, y5, y6, y7] = \
+            UlgParser.get_actuator_outputs_0(self.ulgfile, self.tmpdir)
+
+        actout = Data2D.to_np_array([y0, y1, y2, y3, y4, y5, y6, y7])
+        maxnum_nan = 250
+        actout = Data2D.search_and_replace_nan(actout, maxnum_nan)
+
+        return [csvname, tao, actout]
+
+    def ulgfile_toopazo_ctrlalloc_0(self):
+        [csvname, ttc, status, controls, output, pwm_limited] = \
             UlgParser.get_toopazo_ctrlalloc_0(self.ulgfile, self.tmpdir)
 
+        # s0 = status
         # [c0, c1, c2, c3] = controls
         # [o0, o1, o2, o3, o4, o5, o6, o7] = output
         # [p0, p1, p2, p3, p4, p5, p6, p7] = pwm_limited
 
         maxnum_nan = 250
+        status = [status]
+        status = Data2D.to_np_array(status)
+        status = Data2D.search_and_replace_nan(status, maxnum_nan)
+        status = status[0]
 
-        indx_nan = np.argwhere(np.isnan(status))
-        num_nan = len(indx_nan)
-        if num_nan <= maxnum_nan:
-            status[indx_nan] = status[indx_nan-1]   # Assign previous value
-        else:
-            print('[ulgfile_data] Too many NaN in status[%s]' % indx_nan)
-            print('[ulgfile_data] num_nan %s' % num_nan)
+        controls = Data2D.to_np_array(controls)
+        controls = Data2D.search_and_replace_nan(controls, maxnum_nan)
 
-        for i in range(0, len(controls)):
-            ctrli = controls[i]
-            indx_nan = np.argwhere(np.isnan(ctrli))
-            num_nan = len(indx_nan)
-            if num_nan <= maxnum_nan:
-                ctrli[indx_nan] = ctrli[indx_nan-1]   # Assign previous value
-            else:
-                print('[ulgfile_data] Too many NaN in controls[%s]' % i)
-                print('[ulgfile_data] num_nan %s' % num_nan)
+        output = Data2D.to_np_array(output)
+        output = Data2D.search_and_replace_nan(output, maxnum_nan)
 
-        for i in range(0, len(output)):
-            outi = output[i]
-            indx_nan = np.argwhere(np.isnan(outi))
-            num_nan = len(indx_nan)
-            if num_nan <= maxnum_nan:
-                outi[indx_nan] = outi[indx_nan-1]   # Assign previous value
-            else:
-                print('[ulgfile_data] Too many NaN in output[%s]' % i)
-                print('[ulgfile_data] num_nan %s' % num_nan)
+        pwm_limited = Data2D.to_np_array(pwm_limited)
+        pwm_limited = Data2D.search_and_replace_nan(pwm_limited, maxnum_nan)
 
-        for i in range(0, len(pwm_limited)):
-            pwmi = pwm_limited[i]
-            indx_nan = np.argwhere(np.isnan(pwmi))
-            num_nan = len(indx_nan)
-            if num_nan <= maxnum_nan:
-                pwmi[indx_nan] = pwmi[indx_nan-1]   # Assign previous value
-            else:
-                print('[ulgfile_data] Too many NaN in pwm_limited[%s]' % i)
-                print('[ulgfile_data] num_nan %s' % num_nan)
+        return [csvname, ttc, status, controls, output, pwm_limited]
 
-        return [csvname, x, status, controls, output, pwm_limited]
+    def upsample_arsdata(self, arsdata, motor1, motor2, new_time):
+        chan1 = self.motor_to_channel(motor1)
+        chan2 = self.motor_to_channel(motor2)
 
-    def calculate_syndata(self, pltdata, arsoffset):
+        [ktime, krpm, kcur] = ArsParser.data_keys(chan1, '')
+        # time1 = self.windata[ktime]
+        # rpm1 = self.windata[krpm]
+        # cur1 = self.windata[kcur]
+        time1 = arsdata[ktime]
+        rpm1 = arsdata[krpm]
+        cur1 = arsdata[kcur]
+
+        [ktime, krpm, kcur] = ArsParser.data_keys(chan2, '')
+        # time2 = self.windata[ktime]
+        # rpm2 = self.windata[krpm]
+        # cur2 = self.windata[kcur]
+        time2 = arsdata[ktime]
+        rpm2 = arsdata[krpm]
+        cur2 = arsdata[kcur]
+
+        # Tolerance in sampling time error, measured in seconds
+        # maximum unsigned deviation
+        # t_dt_maxusgndev = 0.01
+        # mean signed deviation
+        t_dt_meansgndev = 10 ** -5
+        tolkey = 't_dt_meansgndev'
+        tolval = t_dt_meansgndev
+
+        # Resample .ars data to match the SPS of .ulg data
+
+        motor1_data2d = Data2D.to_np_array([rpm1, cur1])
+        (motor1_time, motor1_data2d) = Data2D.upsample_data2d(
+            data2d_time=time1, data2d=motor1_data2d, new_time=new_time,
+            tolkey=tolkey, tolval=tolval)
+        time1 = motor1_time
+        rpm1 = motor1_data2d[0]
+        cur1 = motor1_data2d[1]
+
+        motor2_data2d = Data2D.to_np_array([rpm2, cur2])
+        (motor2_time, motor2_data2d) = Data2D.upsample_data2d(
+            data2d_time=time2, data2d=motor2_data2d, new_time=new_time,
+            tolkey=tolkey, tolval=tolval)
+        time2 = motor2_time
+        rpm2 = motor2_data2d[0]
+        cur2 = motor2_data2d[1]
+
+        [ktime, krpm, kcur] = ArsParser.data_keys(chan1, '')
+        # self.windata[ktime] = time1
+        # self.windata[krpm] = rpm1
+        # self.windata[kcur] = cur1
+        arsdata[ktime] = time1
+        arsdata[krpm] = rpm1
+        arsdata[kcur] = cur1
+
+        [ktime, krpm, kcur] = ArsParser.data_keys(chan2, '')
+        # self.windata[ktime] = time2
+        # self.windata[krpm] = rpm2
+        # self.windata[kcur] = cur2
+        arsdata[ktime] = time2
+        arsdata[krpm] = rpm2
+        arsdata[kcur] = cur2
+
+        return arsdata
+
+    def calculate_syndata(self, arsdata, arsoffset):
         self.syndata = {}
         for mpair in self.motor_pairs:
             motor1 = mpair[0]
@@ -482,56 +584,32 @@ class ArsParser:
             chan1 = self.motor_to_channel(motor1)
             chan2 = self.motor_to_channel(motor2)
 
-            [ktime, krpm, kcur] = ArsParser.data_keys(chan1, '')
-            time1 = pltdata[ktime]
-            rpm1 = pltdata[krpm]
-            cur1 = pltdata[kcur]
-
-            [ktime, krpm, kcur] = ArsParser.data_keys(chan2, '')
-            time2 = pltdata[ktime]
-            rpm2 = pltdata[krpm]
-            cur2 = pltdata[kcur]
-
-            [csvname, x, status, controls, output, pwm_limited] = \
-                self.ulgfile_data()
+            [csvname, ttc, status, controls, output, pwm_limited] = \
+                self.ulgfile_toopazo_ctrlalloc_0()
             _ = [csvname, controls]
 
-            # Tolerance in sampling time error, measured in seconds
-            # maximum unsigned deviation
-            # t_dt_maxusgndev = 0.01
-            # mean signed deviation
-            t_dt_meansgndev = 10**-5
-            tolkey = 't_dt_meansgndev'
-            tolval = t_dt_meansgndev
+            # Resample .ars data to match the SPS of .ulg data
+            arsdata = self.upsample_arsdata(
+                arsdata, motor1, motor2, new_time=ttc)
 
-            verbose = self.verbose
-            if verbose:
-                print('[calculate_syndata] Resample rpm1:')
-            [rt1_arr, rx1_arr] = TimeseriesTools.resample(
-                time1, rpm1, x, tolkey, tolval, verbose)
-            _ = rt1_arr
-            rpm1 = rx1_arr
+            [ktime, krpm, kcur] = ArsParser.data_keys(chan1, '')
+            time1 = arsdata[ktime]
+            rpm1 = arsdata[krpm]
+            cur1 = arsdata[kcur]
 
-            if verbose:
-                print('[calculate_syndata] Resample cur1:')
-            [rt1_arr, rx1_arr] = TimeseriesTools.resample(
-                time1, cur1, x, tolkey, tolval, verbose)
-            _ = rt1_arr
-            cur1 = rx1_arr
+            [ktime, krpm, kcur] = ArsParser.data_keys(chan2, '')
+            time2 = arsdata[ktime]
+            rpm2 = arsdata[krpm]
+            cur2 = arsdata[kcur]
 
-            if verbose:
-                print('[calculate_syndata] Resample rpm2:')
-            [rt1_arr, rx1_arr] = TimeseriesTools.resample(
-                time2, rpm2, x, tolkey, tolval, verbose)
-            _ = rt1_arr
-            rpm2 = rx1_arr
+            # print('[calculate_syndata] time_statistics(time1, True)')
+            # tstools.time_statistics(time1, True)
+            # print('[calculate_syndata] time_statistics(time2, True)')
+            # tstools.time_statistics(time2, True)
+            # print('[calculate_syndata] time_statistics(ttc, True)')
+            # tstools.time_statistics(ttc, True)
 
-            if verbose:
-                print('[calculate_syndata] Resample cur2:')
-            [rt1_arr, rx1_arr] = TimeseriesTools.resample(
-                time2, cur2, x, tolkey, tolval, verbose)
-            _ = rt1_arr
-            cur2 = rx1_arr
+            # Select pairs from .ulg data
 
             outa = output[motor1 - 1]
             outb = output[motor2 - 1]
@@ -552,12 +630,14 @@ class ArsParser:
                   % xcorr_dict['ioffset0'])
 
             # Synchronize ars and ulg files
-            tx_nsamples = len(x)
+            tx_nsamples = len(ttc)
             sync_offset = xcorr_dict['ioffset0']
-            rpma = rpm1[sync_offset:(sync_offset+tx_nsamples)]
-            rpmb = rpm2[sync_offset:(sync_offset+tx_nsamples)]
-            cura = cur1[sync_offset:(sync_offset+tx_nsamples)]
-            curb = cur2[sync_offset:(sync_offset+tx_nsamples)]
+            timea = time1[sync_offset:(sync_offset + tx_nsamples)]
+            timeb = time2[sync_offset:(sync_offset + tx_nsamples)]
+            rpma = rpm1[sync_offset:(sync_offset + tx_nsamples)]
+            rpmb = rpm2[sync_offset:(sync_offset + tx_nsamples)]
+            cura = cur1[sync_offset:(sync_offset + tx_nsamples)]
+            curb = cur2[sync_offset:(sync_offset + tx_nsamples)]
 
             # Ad-hoc current calibration
             cura = cura - cura[0]
@@ -570,8 +650,31 @@ class ArsParser:
             # Ad-hoc status calibration
             status = (status - 1) * 0.9
 
+            print('[calculate_syndata] timea[0] %s, timea[-1] %s'
+                  % (timea[0], timea[-1]))
+            print('[calculate_syndata] timeb[0] %s, timeb[-1] %s'
+                  % (timeb[0], timeb[-1]))
+            print('[calculate_syndata] ttc[0] %s, ttc[-1] %s'
+                  % (ttc[0], ttc[-1]))
+
+            # print('[calculate_syndata] np.array(timea - ttc).mean() %s'
+            #       % str(np.array(timea - ttc).mean()))
+            # print('[calculate_syndata] np.array(timeb - ttc).mean() %s'
+            #       % str(np.array(timeb - ttc).mean()))
+
             y_arr = [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb]
-            x_arr = [x]
+            x_arr = [ttc]
+
+            y_arr = Data2D.to_np_array(y_arr)
+            nan_indx = np.argwhere(np.isnan(y_arr))
+            # print(nan_indx)
+            print('[calculate_syndata] nan_indx.shape ', nan_indx.shape)
+            y_arr_shape = y_arr.shape
+            print('[calculate_syndata] np.array(y_arr).shape ', y_arr_shape)
+            y_arr = np.nan_to_num(
+                y_arr, copy=False, nan=0.0, posinf=None, neginf=None)
+            nan_indx = np.argwhere(np.isnan(y_arr))
+            print('[calculate_syndata] nan_indx.shape ', nan_indx.shape)
 
             key = 'm%s_m%s' % (motor1, motor2)
             self.syndata[key] = {'x_arr': x_arr, 'y_arr': y_arr}
@@ -603,8 +706,11 @@ class ArsParser:
             timebars = test_data['timebars']
             cnt = 1
             for tpair in timebars:
-                i0 = tpair[0]
-                i1 = tpair[1]
+                # i0 = tpair[0]
+                # i1 = tpair[1]
+                t_arr = np.array(x_arr[0])
+                i0, t0 = tstools.closest_element(tpair[0], t_arr)
+                i1, t1 = tstools.closest_element(tpair[1], t_arr)
 
                 # y_arr = \
                 #     [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb]
@@ -612,18 +718,18 @@ class ArsParser:
                 [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb] = y_arr
 
                 verbose = False
-                status_d = TimeseriesTools.common_statistics(
+                status_d = tstools.common_statistics(
                     status[i0:i1], verbose)
 
-                outa_d = TimeseriesTools.common_statistics(outa[i0:i1], verbose)
-                pwma_d = TimeseriesTools.common_statistics(pwma[i0:i1], verbose)
-                rpma_d = TimeseriesTools.common_statistics(rpma[i0:i1], verbose)
-                cura_d = TimeseriesTools.common_statistics(cura[i0:i1], verbose)
+                outa_d = tstools.common_statistics(outa[i0:i1], verbose)
+                pwma_d = tstools.common_statistics(pwma[i0:i1], verbose)
+                rpma_d = tstools.common_statistics(rpma[i0:i1], verbose)
+                cura_d = tstools.common_statistics(cura[i0:i1], verbose)
 
-                outb_d = TimeseriesTools.common_statistics(outb[i0:i1], verbose)
-                pwmb_d = TimeseriesTools.common_statistics(pwmb[i0:i1], verbose)
-                rpmb_d = TimeseriesTools.common_statistics(rpmb[i0:i1], verbose)
-                curb_d = TimeseriesTools.common_statistics(curb[i0:i1], verbose)
+                outb_d = tstools.common_statistics(outb[i0:i1], verbose)
+                pwmb_d = tstools.common_statistics(pwmb[i0:i1], verbose)
+                rpmb_d = tstools.common_statistics(rpmb[i0:i1], verbose)
+                curb_d = tstools.common_statistics(curb[i0:i1], verbose)
 
                 # Use only mean and std
                 status_mean = status_d['x_mean']
@@ -674,15 +780,24 @@ class ArsParser:
         # fd.close()
 
     def plot_syndata(self, test_data):
-        closefig = True
         fnctname = self.plot_syndata.__name__
+
         for key, value in self.syndata.items():
             # print('[plot_syndata] Processing syndata[%s] = %s' % (key, value))
 
+            # Unpack key
             m1_m2 = key.replace('m', '')
             m1_m2 = m1_m2.split('_')
             motor1 = int(m1_m2[0])
             motor2 = int(m1_m2[1])
+
+            # Unpack value
+            # y_arr = [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb]
+            # x_arr = [x]
+            value_y_arr = value['y_arr']
+            value_x_arr = value['x_arr']
+
+            # Plot value_y_arr figure
 
             # y_arr = [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb]
             # x_arr = [x]
@@ -694,46 +809,36 @@ class ArsParser:
             # ylabel_arr = ['Output', 'Throttle $\mu$s', 'RPM', 'Current, A']
             # PlotTools.ax4_x1_y8(ax_arr, x_arr, xlabel_arr, y_arr, ylabel_arr)
 
-            # y_arr = [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb]
-            # x_arr = [x]
             # [fig, ax_arr] = FigureTools.create_fig_axes(3, 1)
             fig, ax_arr = plt.subplots(3, 1, figsize=[8, 6])
             xlabel_arr = ['']   # ['Time s']
-            vy_arr = value['y_arr']
-            status = vy_arr[0]
-            y_arr = [vy_arr[1], vy_arr[3], vy_arr[4],
-                     vy_arr[5], vy_arr[7], vy_arr[8]]
-            x_arr = value['x_arr']
+            y_arr = [value_y_arr[1], value_y_arr[3], value_y_arr[4],
+                     value_y_arr[5], value_y_arr[7], value_y_arr[8]]
+            x_arr = value_x_arr
             ylabel_arr = ['Throttle', 'RPM', 'Current, A']
             PlotTools.ax3_x1_y6(ax_arr, x_arr, xlabel_arr, y_arr, ylabel_arr)
             nax = len(ax_arr)
             ax_arr[nax - 1].set(xlabel='Time s')
 
+            # Add status to ax_arr[0]
             arsfile = test_data['arsfile']
-            if ('test11' in arsfile) or ('test12' in arsfile):
-                # fig.suptitle('Timeseries for motors:\n'
-                #              ' %s (red, upper) %s (green, lower)'
-                #              % (motor1, motor2))
-                pass
-            else:
-                # fig.suptitle('Timeseries: ulg and ars files from m%s and m%s'
-                #              % (motor1, motor2))
-                # fig.suptitle('Timeseries for motors:\n'
-                #              ' %s (red, upper) %s (green, lower)'
-                #              % (motor1, motor2))
+            c1 = ('test11' in arsfile) or ('test12' in arsfile)
+            if not c1:
+                # Add status data
+                status = value_y_arr[0]
                 ax_arr[0].plot(
                     x_arr[0], status, color='black', linestyle='dashed')
 
-            y_arr = value['y_arr']
-            x_arr = value['x_arr']
             self.plot_syndata_add_info(ax_arr, x_arr, y_arr, test_data)
 
-            firstname = self.arsfile_basename + '_' + fnctname
-            lastname = '_m%s_m%s' % (motor1, motor2)
-            filename = 'plots/' + firstname + lastname
-            FigureTools.savefig(filename, closefig)
+            self.save_plt(fnctname, motor1, motor2)
 
     def plot_syndata_add_info(self, ax_arr, x_arr, y_arr, test_data):
+        # maxnum_nan = 100
+        # y_arr = Data2D.search_and_replace_nan(y_arr, maxnum_nan)
+        y_arr = np.nan_to_num(
+            y_arr, copy=False, nan=0.0, posinf=None, neginf=None)
+
         detected = False
         arsfile = test_data['arsfile']
         ulgfile = test_data['ulgfile']
@@ -748,20 +853,26 @@ class ArsParser:
             print('[plot_syndata_timebars] timebars is not iterable')
             return
 
-        # Set ylim
-        ylim_arr = test_data['ylim_arr']
-        nax = len(ax_arr)
-        for indx in range(0, nax - 1):
-            ax_arr[indx].set_ylim(ylim_arr[indx])
-            ax_arr[indx].axes.xaxis.set_ticklabels([])
-        ax_arr[nax - 1].set_ylim(ylim_arr[nax - 1])
-        # ax_arr[nax-1].axes.xaxis.set_ticklabels([])
+        c1 = (len(ax_arr) == 3) and (len(y_arr) == 6)
+        c2 = (len(ax_arr) == 4) and (len(y_arr) == 8)
+        if c1 or c2:
+            # Set ylim
+            ylim_arr = test_data['ylim_arr']
+            nax = len(ax_arr)
+            for indx in range(0, nax - 1):
+                ax_arr[indx].set_ylim(ylim_arr[indx])
+                ax_arr[indx].axes.xaxis.set_ticklabels([])
+            ax_arr[nax - 1].set_ylim(ylim_arr[nax - 1])
+            # ax_arr[nax-1].axes.xaxis.set_ticklabels([])
 
         # Add vlines
         timebars = test_data['timebars']
         for tpair in timebars:
-            i0 = tpair[0]
-            i1 = tpair[1]
+            # i0 = tpair[0]
+            # i1 = tpair[1]
+            t_arr = np.array(x_arr[0])
+            i0, t0 = tstools.closest_element(tpair[0], t_arr)
+            i1, t1 = tstools.closest_element(tpair[1], t_arr)
             ArsParser.add_timebars(ax_arr, x_arr, y_arr, i0, i1, test_data)
             ArsParser.add_deltas(ax_arr, x_arr, y_arr, i0, i1, test_data)
 
@@ -773,6 +884,284 @@ class ArsParser:
             for indx in range(0, nax):
                 ax_arr[indx].set_xlim(xlim_arr)
                 # pass
+
+    def find_hover_timebars(self, test_data):
+        fnctname = self.find_hover_timebars.__name__
+
+        [csvname, tmcs, manctrl] = self.ulgfile_manual_control_setpoint_0()
+        _ = [csvname]
+        # https://github.com/PX4/PX4-Autopilot/blob/master/
+        # msg/manual_control_setpoint.msg
+        man_pitch = manctrl[0]
+        man_roll = manctrl[1]
+        man_throttle = manctrl[2]
+        man_yaw = manctrl[3]
+        man_attnorm_arr = Data2D.norm([man_pitch, man_roll], 0, None)
+        _ = man_yaw
+
+        [csvname, tac, actctrl] = self.ulgfile_actuator_controls_0_0()
+        _ = [csvname]
+        act_roll = actctrl[0]
+        act_pitch = actctrl[1]
+        act_yaw = actctrl[2]
+        act_throttle = actctrl[3]
+        act_attnorm_arr = Data2D.norm([act_pitch, act_roll], 0, None)
+        _ = [tac, act_yaw, act_throttle, act_attnorm_arr]
+
+        [csvname, tvlp, locpva] = self.ulgfile_vehicle_local_position_0()
+        _ = [csvname]
+        pos = locpva[0:3]
+        vel = locpva[3:6]
+        acc = locpva[6:9]
+        pnorm_arr = Data2D.norm(pos, 0, None)
+        vnorm_arr = Data2D.norm(vel, 0, None)
+        anorm_arr = Data2D.norm(acc, 0, None)
+        _ = [tvlp, pnorm_arr, vnorm_arr, anorm_arr]
+
+        print('Estimate hover throttle')
+        # hover_throttle = self.estimate_throttle(man_throttle)
+        hover_throttle = np.percentile(np.unique(man_throttle), 50)
+        print('  hover_throttle %s' % hover_throttle)
+
+        # htperc = 0.98
+        # threshold = np.percentile(man_throttle, 50)
+        # threshold = np.percentile(np.unique(man_throttle), 80)
+        threshold = 0.90 * hover_throttle
+        # print(threshold)
+        print('Time windows near hover')
+        print('  threshold %s' % threshold)
+        iwin1_arr, vwin1_arr = tstools.elements_satisfying_condition(
+            man_throttle, operator.gt, threshold)
+        twin1_arr = []
+        for iwin1 in iwin1_arr:
+            twin1 = tmcs[list(iwin1)]
+            if twin1[-1] - twin1[0] >= 5.0:
+                twin1_arr.append(twin1)
+        twin1_arr = np.array(twin1_arr, dtype=object)
+        for twin1 in twin1_arr:
+            print('  twin1[0] %s, twin1[-1] %s' % (twin1[0], twin1[-1]))
+
+        print('Time windows near zero cmd att')
+        # threshold = np.percentile(np.unique(man_attnorm_arr), 70)
+        man_min = np.min(man_attnorm_arr)
+        man_max = np.max(man_attnorm_arr)
+        alpha = 0.5
+        threshold = man_min * (1 - alpha) + man_max * alpha
+        print('  threshold %s' % threshold)
+        iwin2_arr, vwin2_arr = tstools.elements_satisfying_condition(
+            man_attnorm_arr, operator.le, threshold)
+        twin2_arr = []
+        for iwin2 in iwin2_arr:
+            twin2 = tmcs[iwin2]
+            twin2_arr.append(twin2)
+        twin2_arr = np.array(twin2_arr, dtype=object)
+        for twin2 in twin2_arr:
+            print('  twin2[0] %s, twin2[-1] %s' % (twin2[0], twin2[-1]))
+
+        print('Time windows satisfying both conditions')
+        if (len(twin1_arr) != 2) or (len(twin2_arr) < 2):
+            raise RuntimeError
+        twin_data2d = []
+        for twin1 in twin1_arr:
+            twin3_arr = tstools.overlapping_time_windows(
+                [twin1], twin2_arr, min_delta=1.0)
+            twin_data2d.append(twin3_arr)
+        twin_data2d = np.array(twin_data2d, dtype=object)
+        for twin3_arr in twin_data2d:
+            print('  twin3_arr %s' % twin3_arr)
+
+        # timebars_3 = [(345, 350), (370, 390)]
+        timebars = [twin_data2d[0][0], twin_data2d[1][0]]
+        return timebars
+
+    def plot_additional_ulgdata(self, test_data):
+        fnctname = self.plot_additional_ulgdata.__name__
+        self.plot_delta_actctrl(fnctname, test_data)
+        self.plot_delta_actout(fnctname, test_data)
+        self.plot_delta_locpva(fnctname, test_data)
+        self.plot_delta_manctrl(fnctname, test_data)
+        self.plot_delta_toopca(fnctname, test_data)
+
+    def plot_delta_manctrl(self, fnctname, test_data):
+        [csvname, tmcs, manctrl] = self.ulgfile_manual_control_setpoint_0()
+        _ = [csvname]
+        # https://github.com/PX4/PX4-Autopilot/blob/master/
+        # msg/manual_control_setpoint.msg
+        man_pitch = manctrl[0]
+        man_roll = manctrl[1]
+        man_throttle = manctrl[2]
+        man_yaw = manctrl[3]
+        man_attnorm_arr = Data2D.norm([man_pitch, man_roll], 0, None)
+        _ = man_yaw
+
+        print('Plot norm of manctrl')
+        ylabel_arr = ['|man att|', '|man throttle|', '||']
+        data2d = [man_attnorm_arr,
+                  man_throttle,
+                  man_throttle * 0]
+        self.plot_ax3_using_data2d(tmcs, data2d, ylabel_arr, test_data)
+        self.save_plt(fnctname=fnctname, motor1=0, motor2='0_manctrl')
+
+    def plot_delta_actctrl(self, fnctname, test_data):
+        [csvname, tac, actctrl] = self.ulgfile_actuator_controls_0_0()
+        _ = [csvname]
+        act_roll = actctrl[0]
+        act_pitch = actctrl[1]
+        act_yaw = actctrl[2]
+        act_throttle = actctrl[3]
+        act_attnorm_arr = Data2D.norm([act_pitch, act_roll], 0, None)
+        _ = act_yaw
+
+        print('Plot norm of actctrl')
+        ylabel_arr = ['|act att|', '|act throttle|', '||']
+        data2d = [act_attnorm_arr,
+                  act_throttle,
+                  act_throttle * 0]
+        self.plot_ax3_using_data2d(tac, data2d, ylabel_arr, test_data)
+        self.save_plt(fnctname=fnctname, motor1=0, motor2='0_actctrl')
+
+    def plot_delta_locpva(self, fnctname, test_data):
+        [csvname, tvlp, locpva] = self.ulgfile_vehicle_local_position_0()
+        _ = [csvname]
+        pos = locpva[0:3]
+        vel = locpva[3:6]
+        acc = locpva[6:9]
+        pnorm_arr = Data2D.norm(pos, 0, None)
+        vnorm_arr = Data2D.norm(vel, 0, None)
+        anorm_arr = Data2D.norm(acc, 0, None)
+
+        print('Plot norm of locpva')
+        ylabel_arr = ['|pos|', '|vel|', '|acel|']
+        data2d = [pnorm_arr, vnorm_arr, anorm_arr]
+        self.plot_ax3_using_data2d(tvlp, data2d, ylabel_arr, test_data)
+        self.save_plt(fnctname=fnctname, motor1=0, motor2='0_locpva')
+
+    def plot_delta_actout(self, fnctname, test_data):
+        [csvname, tao, actout] = self.ulgfile_actuator_outputs_0()
+        _ = [csvname]
+        # delta_m1m6 = actout[0] - actout[5]
+        # delta_m2m5 = actout[1] - actout[4]
+        delta_m3m8 = actout[2] - actout[7]
+        delta_m4m7 = actout[3] - actout[6]
+
+        print('Plot delta of actout')
+        ylabel_arr = ['$\Delta$ pwm3 - pwm8', '$\Delta$ pwm4 - pwm7', '$\Delta$']
+        data2d = [delta_m3m8,
+                  delta_m4m7,
+                  delta_m4m7 * 0]
+        self.plot_ax3_using_data2d(tao, data2d, ylabel_arr, test_data)
+        self.save_plt(fnctname=fnctname, motor1=0, motor2='0_actout')
+
+    def plot_delta_toopca(self, fnctname, test_data):
+        [csvname, ttc, status, controls, output, pwm_limited] = \
+            self.ulgfile_toopazo_ctrlalloc_0()
+
+        # Correct weird values at the end of the flight on controls[2, :]
+        controls[2, :][controls[2, :] < -0.5] = 0.0
+        # print(controls[2, -500:])
+
+        _ = [csvname, status, pwm_limited]
+        # delta_m1m6 = output[0] - output[5]
+        # delta_m2m5 = output[1] - output[4]
+        delta_m3m8 = output[2] - output[7]
+        delta_m4m7 = output[3] - output[6]
+        actout_data2d = ArsParser.calculate_ctrlalloc(0.1, controls)
+        delta_m4m7_predicted = actout_data2d[3] - actout_data2d[6]
+
+        print('Plot delta of toopca')
+        ylabel_arr = ['$\delta$ m3-m8', '$\delta$ m4-m7', 'predicted $\delta$ m4-m7']
+        data2d = [delta_m3m8,
+                  delta_m4m7,
+                  delta_m4m7_predicted]
+        self.plot_ax3_using_data2d(ttc, data2d, ylabel_arr, test_data)
+        self.save_plt(fnctname=fnctname, motor1=0, motor2='0_toopca')
+
+    @staticmethod
+    def calculate_ctrlalloc(d0, actctrl_data2d):
+        # Octorotor Coaxial
+        # btained from ctrlalloc_octocoax_px4.m
+        bmatrix_8pinvn = [
+            [-1.4142, +1.4142, +2.0000, +2.0000, +0.4981, +0.0019, -0.0019,
+             +0.0019],
+            [+1.4142, +1.4142, -2.0000, +2.0000, +0.0019, +0.4981, +0.0019,
+             -0.0019],
+            [+1.4142, -1.4142, +2.0000, +2.0000, -0.0019, +0.0019, +0.4981,
+             +0.0019],
+            [-1.4142, -1.4142, -2.0000, +2.0000, +0.0019, -0.0019, +0.0019,
+             +0.4981],
+            [+1.4142, +1.4142, +2.0000, +2.0000, -0.0019, -0.4981, -0.0019,
+             +0.0019],
+            [-1.4142, +1.4142, -2.0000, +2.0000, -0.4981, -0.0019, +0.0019,
+             -0.0019],
+            [-1.4142, -1.4142, +2.0000, +2.0000, -0.0019, +0.0019, -0.0019,
+             -0.4981],
+            [+1.4142, -1.4142, -2.0000, +2.0000, +0.0019, -0.0019, -0.4981,
+             -0.0019]
+        ]
+
+        actout_data2d = []
+        for samplej in range(0, actctrl_data2d.shape[1]):
+            actctrl = actctrl_data2d[:, samplej]
+            # print(actctrl)
+            # print(actctrl_data2d.shape)
+            actout = list(range(0, 8))
+            for i in range(0, 8):
+                actout[i] = \
+                    bmatrix_8pinvn[i][0] * actctrl[0] + \
+                    bmatrix_8pinvn[i][1] * actctrl[1] + \
+                    bmatrix_8pinvn[i][2] * actctrl[2] + \
+                    bmatrix_8pinvn[i][3] * actctrl[3] + \
+                    bmatrix_8pinvn[i][4] * d0 + \
+                    bmatrix_8pinvn[i][5] * d0 + \
+                    bmatrix_8pinvn[i][6] * d0 + \
+                    bmatrix_8pinvn[i][7] * d0 + \
+                    - 1
+            actout_data2d.append(actout)
+        actout_data2d = np.array(actout_data2d)
+        actout_data2d = np.matrix.transpose(actout_data2d)
+        print(actout_data2d.shape)
+        return actout_data2d
+
+    @staticmethod
+    def estimate_throttle(man_throttle):
+        indx = np.argwhere(man_throttle > 0.01)
+        nonzero_man_throttle = man_throttle[indx]
+        # print('  len(rcval) %s' % len(rcval))
+        stats_mode = stats.mode(nonzero_man_throttle)
+        mode = stats_mode.mode.flatten()
+        count = stats_mode.count.flatten()
+        hover_throttle = mode[0]
+        return hover_throttle
+
+    def plot_ax3_using_data2d(self, t_arr, data2d, ylabel_arr, test_data):
+        # [fig, ax_arr] = FigureTools.create_fig_axes(3, 1)
+        fig, ax_arr = plt.subplots(3, 1, figsize=[8, 6])
+
+        xlabel_arr = ['']  # ['Time s']
+        y_arr = data2d
+        x_arr = [t_arr]
+        PlotTools.ax3_x1_y3(ax_arr, x_arr, xlabel_arr, y_arr, ylabel_arr)
+        nax = len(ax_arr)
+        ax_arr[nax - 1].set(xlabel='Time s')
+
+        # Test that "linalg.norm(vel_arr, axis=0)" does its job
+        # i_arr = x_arr[0]
+        # vel_arr = [i_arr, i_arr, i_arr]
+        # vel_arr = Data2D.to_np_array(vel_arr)
+        # test_arr = linalg.norm(vel_arr, axis=0) / np.sqrt(3)
+        # ax_arr[0].plot(
+        #     x_arr[0], test_arr, color='black', linestyle='dashed')
+        # ax_arr[0].set_ylim([i_arr[0], i_arr[-1]])
+        # ax_arr[0].set_xlim([i_arr[0], i_arr[-1]])
+
+        self.plot_syndata_add_info(ax_arr, x_arr, y_arr, test_data)
+
+    def save_plt(self, fnctname, motor1, motor2):
+        closefig = True
+        firstname = self.arsfile_basename + '_' + fnctname
+        lastname = '_m%s_m%s' % (motor1, motor2)
+        filename = 'plots/' + firstname + lastname
+        FigureTools.savefig(filename, closefig)
 
     @staticmethod
     def calculate_deltas(x_arr, y_arr, i0, i1):
@@ -794,9 +1183,8 @@ class ArsParser:
 
     @staticmethod
     def add_deltas(ax_arr, x_arr, y_arr, i0, i1, test_data, **kwargs):
-        [twin, dout_avg, dpwm_avg, drpm_avg, dcur_avg, tcur_avg] = \
-            ArsParser.calculate_deltas(x_arr, y_arr, i0, i1)
-        _ = twin
+        text_arr, last_ax_total_avg = ArsParser.generate_text_arr(
+            ax_arr, x_arr, y_arr, i0, i1)
 
         # time_arr = x_arr[0]
         x_arr = x_arr[0]
@@ -805,42 +1193,7 @@ class ArsParser:
         # units_arr = test_data['units_arr']
         bbox_dict = dict(facecolor='white', edgecolor='none', alpha=0.8)
 
-        text_arr = []
-        if len(ax_arr) == 3:
-            text_arr = [
-                '$\Delta$ %s' % round(float(dout_avg), 2),
-                '$\Delta$ %s rpm' % int(round(float(drpm_avg))),
-                '$\Delta$ %s A' % round(float(dcur_avg), 2)
-            ]
-        if len(ax_arr) == 4:
-            text_arr = [
-                '$\Delta$ %s' % round(float(dout_avg), 2),
-                '$\Delta$ %s pwm' % int(round(float(dpwm_avg))),
-                '$\Delta$ %s rpm' % int(round(float(drpm_avg))),
-                '$\Delta$ %s A' % round(float(dcur_avg), 2)
-            ]
-
         if ('test11' in arsfile) or ('test12' in arsfile):
-            text_xy0 = test_data['text_xy0']
-            for indx in range(0, len(ax_arr)):
-                ax = ax_arr[indx]
-                arg = text_arr[indx]
-                xy0 = text_xy0[indx]
-                x0 = x_arr[i0] + xy0[0]
-                y0 = 0 + xy0[1]
-                ax.text(x0, y0, arg, fontsize=14, color='black', bbox=bbox_dict)
-
-            # Ad-hoc
-            indx = len(ax_arr) - 1
-            ax = ax_arr[indx]
-            arg = 'tot %s A' % round(float(tcur_avg), 2)
-            xy0 = text_xy0[indx]
-            ylim = ylim_arr[indx]
-            x0 = x_arr[i0] + xy0[0]
-            y0 = ylim[1] * 0.75
-            ax.text(x0, y0, arg, fontsize=14, color='black', bbox=bbox_dict)
-
-            # Ad-hoc
             ax = ax_arr[0]
             arg = 'custom to default \n transition'
             transition = test_data['transition']
@@ -854,10 +1207,13 @@ class ArsParser:
                     arrowstyle="fancy", color="grey", patchB=None,
                     shrinkB=5, connectionstyle="arc3,rad=0.3", )
             )
-            # bbox=bbox_dict
 
-        # test1 to test10
-        else:
+        # Add data for coaxial results [(output), throttle, rpm, current]
+        #   log_dec22_test12_plot_syndata_m3_m8.png
+        #   log_dec22_test12_plot_syndata_m4_m7.png
+        c1 = (len(ax_arr) == 3) and (len(y_arr) == 6)
+        c2 = (len(ax_arr) == 4) and (len(y_arr) == 8)
+        if c1 or c2:
             for indx in range(0, len(ax_arr)):
                 ax = ax_arr[indx]
                 ylim = ylim_arr[indx]
@@ -867,45 +1223,120 @@ class ArsParser:
                 y0 = ylim[0] * 0.95 + ylim[1] * (1 - 0.95)
                 ax.text(x0, y0, arg, fontsize=14, color='black', bbox=bbox_dict)
 
-            # Ad-hoc
+            # Add total current
             indx = len(ax_arr) - 1
             ax = ax_arr[indx]
             ylim = ylim_arr[indx]
-            arg = 'tot %s A' % round(float(tcur_avg), 2)
+            arg = 'tot %s A' % round(float(last_ax_total_avg), 2)
             plt.sca(ax)
             x0 = x_arr[i0]
             y0 = ylim[1] * 0.75
-            ax.text(x0, y0, arg, fontsize=14, color='black', **kwargs)
+            ax.text(x0, y0, arg, fontsize=14, color='black', bbox=bbox_dict)
+
+    @staticmethod
+    def generate_text_arr(ax_arr, x_arr, y_arr, i0, i1):
+        # if len(y_arr) != 9:
+        #     return
+        # else:
+        #     [twin, dout_avg, dpwm_avg, drpm_avg, dcur_avg, tcur_avg] = \
+        #         ArsParser.calculate_deltas(x_arr, y_arr, i0, i1)
+        #     _ = twin
+        last_ax_total_avg = None
+        _ = x_arr
+
+        text_arr = []
+        if (len(ax_arr) == 3) and (len(y_arr) == 6):
+            data_m1 = y_arr[0]
+            data_m2 = y_arr[3]
+            ax0_delta_avg = np.mean(data_m1[i0:i1] - data_m2[i0:i1])  # / twin
+            data_m1 = y_arr[1]
+            data_m2 = y_arr[4]
+            ax1_delta_avg = np.mean(data_m1[i0:i1] - data_m2[i0:i1])  # / twin
+            data_m1 = y_arr[2]
+            data_m2 = y_arr[5]
+            ax2_delta_avg = np.mean(data_m1[i0:i1] - data_m2[i0:i1])  # / twin
+            ax2_total_avg = np.mean(data_m1[i0:i1] + data_m2[i0:i1])
+            last_ax_total_avg = ax2_total_avg
+
+            # for i in range(0, len(y_arr)):
+            #     datai = y_arr[i]
+            #     datai = np.array(datai)
+            #     nan_indx = np.argwhere(datai is np.nan)
+            #     print('nan_indx %s' % nan_indx)
+            # # print(np.isnan(y_arr))
+            # print('nan_indx %s' % np.argwhere(np.isnan(y_arr)))
+            # print(np.array(y_arr).shape)
+            # np.nan_to_num(y_arr, copy=False, nan=0.0, posinf=None, neginf=None)
+            # print(y_arr[3])
+            # print(len(y_arr))
+
+            text_arr = [
+                '$\Delta$ %s' % round(float(ax0_delta_avg), 2),
+                '$\Delta$ %s rpm' % int(round(float(ax1_delta_avg))),
+                '$\Delta$ %s A' % round(float(ax2_delta_avg), 2)
+            ]
+
+        if (len(ax_arr) == 4) and (len(y_arr) == 8):
+            data_m1 = y_arr[0]
+            data_m2 = y_arr[4]
+            ax0_delta_avg = np.mean(data_m1[i0:i1] - data_m2[i0:i1])  # / twin
+            data_m1 = y_arr[1]
+            data_m2 = y_arr[5]
+            ax1_delta_avg = np.mean(data_m1[i0:i1] - data_m2[i0:i1])  # / twin
+            data_m1 = y_arr[2]
+            data_m2 = y_arr[6]
+            ax2_delta_avg = np.mean(data_m1[i0:i1] - data_m2[i0:i1])  # / twin
+            data_m1 = y_arr[3]
+            data_m2 = y_arr[7]
+            ax3_delta_avg = np.mean(data_m1[i0:i1] - data_m2[i0:i1])  # / twin
+            ax3_total_avg = np.mean(data_m1[i0:i1] + data_m2[i0:i1])
+            last_ax_total_avg = ax3_total_avg
+
+            text_arr = [
+                '$\Delta$ %s' % round(float(ax0_delta_avg), 2),
+                '$\Delta$ %s pwm' % int(round(float(ax1_delta_avg))),
+                '$\Delta$ %s rpm' % int(round(float(ax2_delta_avg))),
+                '$\Delta$ %s A' % round(float(ax3_delta_avg), 2)
+            ]
+        return text_arr, last_ax_total_avg
 
     @staticmethod
     def add_timebars(ax_arr, x_arr, y_arr, i0, i1, test_data, **kwargs):
         ylim_arr = test_data['ylim_arr']
+        _ = y_arr
 
         # time_arr = x_arr[0]
         x_arr = x_arr[0]
 
-        arsfile = test_data['arsfile']
-        if ('test11' in arsfile) or ('test12' in arsfile):
-            for indx in range(0, len(ax_arr)):
-                ax = ax_arr[indx]
-                ylim = ylim_arr[indx] * 0.9
-                ymin = ylim[0]
-                ymax = ylim[1]
-                _ = y_arr
+        # arsfile = test_data['arsfile']
+        # if ('test11' in arsfile) or ('test12' in arsfile):
+        #     for axis_indx in range(0, len(ax_arr)):
+        #         ax = ax_arr[axis_indx]
+        #         ylim = ylim_arr[axis_indx] * 0.9
+        #         ymin = ylim[0]
+        #         ymax = ylim[1]
+        #
+        #         x0 = x_arr[i0]
+        #         ax.vlines(x=x0, ymin=ymin, ymax=ymax, colors='k',
+        #                   linestyles='dashed', label='', **kwargs)
+        #         x0 = x_arr[i1]
+        #         ax.vlines(x=x0, ymin=ymin, ymax=ymax, colors='k',
+        #                   linestyles='dashed', label='', **kwargs)
+        #         # return
 
-                x0 = x_arr[i0]
-                ax.vlines(x=x0, ymin=ymin, ymax=ymax, colors='k',
-                          linestyles='dashed', label='', **kwargs)
-                x0 = x_arr[i1]
-                ax.vlines(x=x0, ymin=ymin, ymax=ymax, colors='k',
-                          linestyles='dashed', label='', **kwargs)
-        else:
-            indx = len(ax_arr) - 2
+        selected_axis = len(ax_arr) - 2
+        timebars_on_all_axes = True
+        for indx in range(0, len(ax_arr)):
+            if (not timebars_on_all_axes) and (selected_axis != indx):
+                continue
             ax = ax_arr[indx]
             ylim = ylim_arr[indx] * 0.9
             ymin = ylim[0]
             ymax = ylim[1]
-            _ = y_arr
+            if (len(ax_arr) == 3) and (len(y_arr) == 3):
+                data_m1 = y_arr[indx]
+                ymin = np.min(data_m1)
+                ymax = np.max(data_m1)
 
             x0 = x_arr[i0]
             ax.vlines(x=x0, ymin=ymin, ymax=ymax, colors='k',
@@ -1224,6 +1655,8 @@ if __name__ == '__main__':
     # # m38_intercept -139.08974487011255
     # exit(0)
 
+    warnings.simplefilter('error', UserWarning)
+
     parser = argparse.ArgumentParser(
         description='Parse, process and plot .ulg files')
     parser.add_argument('--testnum', action='store', required=False,
@@ -1241,11 +1674,19 @@ if __name__ == '__main__':
         u_arsoffset = u_test_data['arsoffset']
 
         u_verbose = False
-        uarsparser = ArsParser(u_bdir, u_arsfile, u_ulgfile, u_verbose)
-        # uarsparser.plot()
-        uarsparser.calculate_syndata(uarsparser.windata, u_arsoffset)
-        uarsparser.plot_syndata(u_test_data)
-        uarsparser.write_syndata_timebars(u_test_data, u_testkey)
+        u_arsparser = ArsParser(u_bdir, u_arsfile, u_ulgfile, u_verbose)
+        # u_arsparser.plot_basic_ulgdata()
+        u_arsparser.plot_mixer_ulgdata()
+        u_arsparser.plot_additional_ulgdata(u_test_data)
+
+        # u_test_data['timebars'] = u_arsparser.find_hover_timebars(u_test_data)
+
+        # u_arsparser.calculate_syndata(u_arsparser.rawdata, u_arsoffset)
+        u_arsparser.calculate_syndata(u_arsparser.caldata, u_arsoffset)
+        # u_arsparser.calculate_syndata(u_arsparser.windata, u_arsoffset)
+        u_arsparser.plot_syndata(u_test_data)
+        u_arsparser.write_syndata_timebars(u_test_data, u_testkey)
+        # u_arsparser.plot_basic_ulgdata()
 
     if user_args.testall:
         for testi in range(1, 11):
@@ -1257,8 +1698,16 @@ if __name__ == '__main__':
             u_arsoffset = u_test_data['arsoffset']
 
             u_verbose = False
-            uarsparser = ArsParser(u_bdir, u_arsfile, u_ulgfile, u_verbose)
-            # uarsparser.plot()
-            uarsparser.calculate_syndata(uarsparser.windata, u_arsoffset)
-            uarsparser.plot_syndata(u_test_data)
-            uarsparser.write_syndata_timebars(u_test_data, u_testkey)
+            u_arsparser = ArsParser(u_bdir, u_arsfile, u_ulgfile, u_verbose)
+            u_arsparser.plot_basic_ulgdata()
+            u_arsparser.plot_mixer_ulgdata()
+            u_arsparser.plot_additional_ulgdata(u_test_data)
+
+            # u_test_data['timebars'] = u_arsparser.find_hover_timebars(
+            #     u_test_data)
+            
+            # u_arsparser.calculate_syndata(u_arsparser.rawdata, u_arsoffset)
+            u_arsparser.calculate_syndata(u_arsparser.caldata, u_arsoffset)
+            # u_arsparser.calculate_syndata(u_arsparser.windata, u_arsoffset)
+            u_arsparser.plot_syndata(u_test_data)
+            u_arsparser.write_syndata_timebars(u_test_data, u_testkey)
