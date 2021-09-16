@@ -42,7 +42,8 @@ class ArsIface:
             #     'data': [0, 0, 0, 0, 0, 0, 0, 0, 510, 520, 507, 548, 10, 14,
             #              17, 19]
             # }
-            print('[serial_thread_main] data {}'.format(data))
+
+            # print('[serial_thread_main] data {}'.format(data))
             if 'error' in data.keys():
                 print('[serial_thread_main] Error {}'.format(data['error']))
                 continue
