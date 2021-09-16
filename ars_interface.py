@@ -22,7 +22,7 @@ class ArsIface:
             timeout=1
         )
 
-        self.serial_data = None
+        self.serial_data = ""
         self.serial_thread_lock = threading.Lock()
         self.serial_thread_event = threading.Event()
         self.serial_thread = threading.Thread(
