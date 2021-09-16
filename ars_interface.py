@@ -42,6 +42,7 @@ class ArsIface:
             #     'data': [0, 0, 0, 0, 0, 0, 0, 0, 510, 520, 507, 548, 10, 14,
             #              17, 19]
             # }
+            print('[serial_thread_main] data {}'.format(data))
             data_arr = [
                 data['header']['sps'], data['header']['mills'],
                 data['header']['secs'], data['header']['dtmills'],

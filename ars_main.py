@@ -18,7 +18,6 @@ class ArsIfaceWrapper:
 
     def get_data(self):
         log_data = self.ars.safely_read_data()
-        print('[get_data] log_data {}'.format(log_data))
         return log_data
 
     def close(self):
