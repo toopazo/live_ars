@@ -43,9 +43,11 @@ class ArsIface:
             #              17, 19]
             # }
             data_arr = [
-                data['sps'], data['mills'], data['secs'], data['dtmills'],
-                data['data']
+                data['header']['sps'], data['header']['mills'],
+                data['header']['secs'], data['header']['dtmills'],
             ]
+            # data_arr = data_arr.append(data['data'])
+            data_arr = data_arr + list(data['data'])
             data = ', '.join(map(str, data_arr))
             self.safely_write_data(data)
         self.serial.close()
