@@ -35,7 +35,18 @@ class ArsIface:
         while not close_event.is_set():
             line = self.serial.readline()
             data = ArsIface.parse_line(line)
-            data = str(data)
+            # data = {
+            #     'header': {
+            #         'sps': 200, 'mills': 9000, 'secs': 9.0, 'dtmills': 9000
+            #     },
+            #     'data': [0, 0, 0, 0, 0, 0, 0, 0, 510, 520, 507, 548, 10, 14,
+            #              17, 19]
+            # }
+            data_arr = [
+                data['sps'], data['mills'], data['secs'], data['dtmills'],
+                data['data']
+            ]
+            data = ', '.join(map(str, data_arr))
             self.safely_write_data(data)
         self.serial.close()
 

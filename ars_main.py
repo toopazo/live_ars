@@ -42,9 +42,19 @@ if __name__ == '__main__':
     telem_ext = ".ars"
     telem_logger = TelemetryLogger(telem_folder, telem_iface, telem_ext)
 
-    usampling_period = 0.1
-    ulog_header = "time s, escid, "\
-                  "voltage V, current A, angVel rpm, temp degC, warning, " \
-                  "inthtl us, outthtl perc"
-    telem_logger.live_data(usampling_period, ulog_header)
+    sampling_period = 0.1
+    # data = {
+    #     'header': {
+    #         'sps': 200, 'mills': 9000, 'secs': 9.0, 'dtmills': 9000
+    #     },
+    #     'data': [0, 0, 0, 0, 0, 0, 0, 0, 510, 520, 507, 548, 10, 14,
+    #              17, 19]
+    # }
+    fields = ["sps", "mills", "secs", "dtmills",
+              "cur1", "cur2", "cur3", "cur4",
+              "cur5", "cur6", "cur7", "cur8",
+              "rpm1", "rpm2", "rpm3", "rpm4",
+              "rpm5", "rpm6", "rpm7", "rpm8"]
+    log_header = ", ".join(fields)
+    telem_logger.live_data(sampling_period, log_header)
 
