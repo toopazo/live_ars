@@ -35,6 +35,7 @@ class ArsIface:
         while not close_event.is_set():
             line = self.serial.readline()
             data = ArsIface.parse_line(line)
+            data = str(data)
             self.safely_write_data(data)
         self.serial.close()
 
