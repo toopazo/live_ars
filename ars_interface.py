@@ -43,6 +43,9 @@ class ArsIface:
             #              17, 19]
             # }
             print('[serial_thread_main] data {}'.format(data))
+            if 'error' in data.keys():
+                print('[serial_thread_main] Error {}'.format(data['error']))
+                continue
             data_arr = [
                 data['header']['sps'], data['header']['mills'],
                 data['header']['secs'], data['header']['dtmills'],
@@ -88,7 +91,7 @@ class ArsIface:
         hd_sep = ':'
         cm_sep = ','
         if hd_sep not in line:
-            return {'Error': '[parse_line] unrecognized format'}
+            return {'error': '[parse_line] unrecognized format'}
         else:
             hd = line.split(hd_sep)
             # print(hd)
@@ -96,7 +99,7 @@ class ArsIface:
             data = hd[1]
             h = header.split(cm_sep)
         if len(h) != 4:
-            return {'Error': '[parse_line] header fields do not match'}
+            return {'error': '[parse_line] header fields do not match'}
         else:
             header_dict = {'sps': int(h[0]), 'mills': int(h[1]),
                            'secs': float(h[2]), 'dtmills': int(h[3])}
