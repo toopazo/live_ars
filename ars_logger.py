@@ -12,8 +12,8 @@ from ars_interface import ArsIface
 
 
 class ArsIfaceWrapper:
-    def __init__(self):
-        self.ars = ArsIface()
+    def __init__(self, port):
+        self.ars = ArsIface(port)
         self.esc_arr = list(range(11, 19))
 
     def get_data(self):
@@ -38,7 +38,7 @@ def parse_user_arg(folder):
 
 if __name__ == '__main__':
     telem_folder = parse_user_arg(sys.argv[1])
-    telem_iface = ArsIfaceWrapper()
+    telem_iface = ArsIfaceWrapper('/dev/ttyACM0')
     telem_ext = ".ars"
     telem_logger = TelemetryLogger(telem_folder, telem_iface, telem_ext)
 
