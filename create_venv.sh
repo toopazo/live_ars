@@ -7,6 +7,9 @@ source venv/bin/activate
 
 # Install libraries
 python -m pip install -U scipy
+python -m pip install -U matplotlib
+python -m pip install -U numpy
+python -m pip install -U pandas
 python -m pip install -U pyserial
 python -m pip install -U pyqt5
 python -m pip install -U toopazo-tools

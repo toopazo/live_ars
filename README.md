@@ -18,7 +18,28 @@ To deactivate it just type
 ```shell
 deactivate
 ```
-## Running the code
+
+## Saving data to a log file
+To run the code and start saving data to a log file in the 
+current directory, type
 ```shell
-python ars_main.py .
+python ars_logger.py .
+```
+
+## Plotting data from a log file
+To plot data this repo makes us of 
+[pandas](https://pandas.pydata.org/docs/index.html). 
+Therefore, we need to indicate a filename to parse but also
+an index for our dataframe.
+```shell
+python ars_plot_log.py filename index_col
+```
+Another option is to choose ```None``` and let 
+pandas generate and index.
+
+E.g.
+```buildoutcfg
+python ars_plot_log.py logs/log_5_2021-10-14-19-22-46.ars None
+
+
 ```

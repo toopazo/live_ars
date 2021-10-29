@@ -22,8 +22,13 @@ class PlotTelemetryLog:
         _ = root
         self.file_extension = ext
 
+        if index_col == "None":
+            print('index_col == "None"')
+            index_col = None
+
         self.dataframe = pandas.read_csv(
-            self.file_path, index_col=index_col, parse_dates=True)
+            self.file_path, index_col=index_col, delimiter=',',
+            parse_dates=False, skipinitialspace=True)
         # self.dataframe.set_index(
         #     index_col, inplace=True, verify_integrity=True)
         # print(self.dataframe)
@@ -61,16 +66,23 @@ class PlotTelemetryLog:
 def calibrate_dataframe(dataframe, col_curi, col_rpmi):
     assert isinstance(dataframe, pandas.DataFrame)
 
-    frq_arr = dataframe[col_rpmi].values
-    cur_arr = dataframe[col_curi].values
-    print(frq_arr)
-    print(cur_arr)
+    # cur_arr = dataframe[col_curi].values
+    # frq_arr = dataframe[col_rpmi].values
+    # print(cur_arr)
+    # print(frq_arr)
 
     # 1) Divide samples into 0rpm and non0rpm
-    dataframe_0rpm = dataframe[dataframe[frq_arr] == 0]
-    dataframe_non0rpm = dataframe[dataframe[frq_arr] != 0]
+    for column in dataframe:
+        print(column)
 
-    for sample in range(0, nsamples):
+        # cur_arr_0rpm = dataframe[columns]
+
+    exit(0)
+
+    # for sample in range(0, nsamples):
+    for index, row in dataframe.iterrows():
+        # print(f"index: {index}, row: {row}")
+
         time = sample
         rpm = frq_arr[sample] * 60      # Hz to RPM
         rpm = ArsParser.apply_linreg(rpm)
@@ -185,28 +197,29 @@ if __name__ == '__main__':
     #     warning, inthtl us, outthtl perc
 
     col_sps = "sps"
-    col_mills = " mills"
-    col_sesc = " secs"
-    col_dtmills = " dtmills"
-    col_cur1 = " cur1"
-    col_cur2 = " cur2"
-    col_cur3 = " cur3"
-    col_cur4 = " cur4"
-    col_cur5 = " cur5"
-    col_cur6 = " cur6"
-    col_cur7 = " cur7"
-    col_cur8 = " cur8"
-    col_rpm1 = " rpm1"
-    col_rpm2 = " rpm2"
-    col_rpm3 = " rpm3"
-    col_rpm4 = " rpm4"
-    col_rpm5 = " rpm5"
-    col_rpm6 = " rpm6"
-    col_rpm7 = " rpm7"
-    col_rpm8 = " rpm8"
+    col_mills = "mills"
+    col_sesc = "secs"
+    col_dtmills = "dtmills"
+    col_cur1 = "cur1"
+    col_cur2 = "cur2"
+    col_cur3 = "cur3"
+    col_cur4 = "cur4"
+    col_cur5 = "cur5"
+    col_cur6 = "cur6"
+    col_cur7 = "cur7"
+    col_cur8 = "cur8"
+    col_rpm1 = "rpm1"
+    col_rpm2 = "rpm2"
+    col_rpm3 = "rpm3"
+    col_rpm4 = "rpm4"
+    col_rpm5 = "rpm5"
+    col_rpm6 = "rpm6"
+    col_rpm7 = "rpm7"
+    col_rpm8 = "rpm8"
 
     plotlog = PlotTelemetryLog(ufilename, uindexcol)
     udataframe = plotlog.dataframe
+    print(udataframe)
     udataframe = calibrate_dataframe(udataframe, col_cur8, col_rpm8)
 
     # plotlog = PlotTelemetryLog(ufilename, uindexcol)
