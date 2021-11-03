@@ -22,6 +22,10 @@ class PlotTelemetryLog:
         _ = root
         self.file_extension = ext
 
+        if index_col == "None":
+            print('index_col == "None"')
+            index_col = None
+
         self.dataframe = pandas.read_csv(
             self.file_path, index_col=index_col, delimiter=',',
             parse_dates=False, skipinitialspace=True)
@@ -64,8 +68,17 @@ def calibrate_dataframe(dataframe, col_curi, col_rpmi):
 
     cur_arr = dataframe[col_curi].values
     frq_arr = dataframe[col_rpmi].values
-    print(cur_arr)
+    cur_arr = dataframe[col_curi].values
     print(frq_arr)
+    print(cur_arr)
+
+    # 1) Divide samples into 0rpm and non0rpm
+    for column in dataframe:
+        print(column)
+
+        # cur_arr_0rpm = dataframe[columns]
+
+    exit(0)
 
     # for sample in range(0, nsamples):
     for index, row in dataframe.iterrows():
@@ -207,6 +220,7 @@ if __name__ == '__main__':
 
     plotlog = PlotTelemetryLog(ufilename, uindexcol)
     udataframe = plotlog.dataframe
+    print(udataframe)
     udataframe = calibrate_dataframe(udataframe, col_cur8, col_rpm8)
 
     # plotlog = PlotTelemetryLog(ufilename, uindexcol)
