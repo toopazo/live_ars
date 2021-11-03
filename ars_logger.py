@@ -14,7 +14,6 @@ from ars_interface import ArsIface
 class ArsIfaceWrapper:
     def __init__(self, port):
         self.ars = ArsIface(port)
-        self.esc_arr = list(range(11, 19))
 
     def get_data(self):
         log_data = self.ars.safely_read_data()
