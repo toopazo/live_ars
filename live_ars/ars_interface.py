@@ -86,7 +86,11 @@ class ArsIface:
         # data = s0,s1,s2,s3,s4,s5,s6,s7,s8,s8,s10,s11,s12,s13,s14,s15
 
         # print(type(line))
-        line = line.decode("utf-8")
+        try:
+            line = line.decode("utf-8")
+        except UnicodeDecodeError:
+            return {'error': '[parse_line] unrecognized format'}
+
         # print(type(line))
         assert isinstance(line, str)
         hd_sep = ':'
