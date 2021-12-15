@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="live_esc",    # Replace with your own username
-    version="0.0.1",
+    name="live_ars",    # Replace with your own username
+    version="0.0.2",
     author="toopazo",
     author_email="toopazo@protonmail.com",
     description="Python package to communicate in real time with an Arduino equipped with current and rpm sensors",
