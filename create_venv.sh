@@ -13,4 +13,5 @@ python -m pip install -U pandas
 python -m pip install -U pyserial
 python -m pip install -U pyqt5
 python -m pip install -U toopazo-tools
+python -m pip install -U toopazo-ulg
 

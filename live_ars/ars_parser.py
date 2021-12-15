@@ -2,10 +2,10 @@
 
 from toopazo_tools.matplotlib import FigureTools, PlotTools, plt
 from toopazo_tools.file_folder import FileFolderTools
-from toopazo_tools.time_series import TimeseriesTools as tstools
+from toopazo_tools.time_series import TimeseriesTools as TSTools
 from toopazo_tools.data2d import Data2D
-from toopazo_ulg.file_parser import UlgParser
-from toopazo_ulg.plot_main import UlgMain
+from toopazo_ulg.parse_file import UlgParser
+from toopazo_ulg.plot_main import UlgPlot as UlgMain
 
 
 from ars_dec22_data import ArsDec22Data
@@ -603,11 +603,11 @@ class ArsParser:
             cur2 = arsdata[kcur]
 
             # print('[calculate_syndata] time_statistics(time1, True)')
-            # tstools.time_statistics(time1, True)
+            # TSTools.time_statistics(time1, True)
             # print('[calculate_syndata] time_statistics(time2, True)')
-            # tstools.time_statistics(time2, True)
+            # TSTools.time_statistics(time2, True)
             # print('[calculate_syndata] time_statistics(ttc, True)')
-            # tstools.time_statistics(ttc, True)
+            # TSTools.time_statistics(ttc, True)
 
             # Select pairs from .ulg data
 
@@ -709,8 +709,8 @@ class ArsParser:
                 # i0 = tpair[0]
                 # i1 = tpair[1]
                 t_arr = np.array(x_arr[0])
-                i0, t0 = tstools.closest_element(tpair[0], t_arr)
-                i1, t1 = tstools.closest_element(tpair[1], t_arr)
+                i0, t0 = TSTools.closest_element(tpair[0], t_arr)
+                i1, t1 = TSTools.closest_element(tpair[1], t_arr)
 
                 # y_arr = \
                 #     [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb]
@@ -718,18 +718,18 @@ class ArsParser:
                 [status, outa, pwma, rpma, cura, outb, pwmb, rpmb, curb] = y_arr
 
                 verbose = False
-                status_d = tstools.common_statistics(
+                status_d = TSTools.common_statistics(
                     status[i0:i1], verbose)
 
-                outa_d = tstools.common_statistics(outa[i0:i1], verbose)
-                pwma_d = tstools.common_statistics(pwma[i0:i1], verbose)
-                rpma_d = tstools.common_statistics(rpma[i0:i1], verbose)
-                cura_d = tstools.common_statistics(cura[i0:i1], verbose)
+                outa_d = TSTools.common_statistics(outa[i0:i1], verbose)
+                pwma_d = TSTools.common_statistics(pwma[i0:i1], verbose)
+                rpma_d = TSTools.common_statistics(rpma[i0:i1], verbose)
+                cura_d = TSTools.common_statistics(cura[i0:i1], verbose)
 
-                outb_d = tstools.common_statistics(outb[i0:i1], verbose)
-                pwmb_d = tstools.common_statistics(pwmb[i0:i1], verbose)
-                rpmb_d = tstools.common_statistics(rpmb[i0:i1], verbose)
-                curb_d = tstools.common_statistics(curb[i0:i1], verbose)
+                outb_d = TSTools.common_statistics(outb[i0:i1], verbose)
+                pwmb_d = TSTools.common_statistics(pwmb[i0:i1], verbose)
+                rpmb_d = TSTools.common_statistics(rpmb[i0:i1], verbose)
+                curb_d = TSTools.common_statistics(curb[i0:i1], verbose)
 
                 # Use only mean and std
                 status_mean = status_d['x_mean']
@@ -871,8 +871,8 @@ class ArsParser:
             # i0 = tpair[0]
             # i1 = tpair[1]
             t_arr = np.array(x_arr[0])
-            i0, t0 = tstools.closest_element(tpair[0], t_arr)
-            i1, t1 = tstools.closest_element(tpair[1], t_arr)
+            i0, t0 = TSTools.closest_element(tpair[0], t_arr)
+            i1, t1 = TSTools.closest_element(tpair[1], t_arr)
             ArsParser.add_timebars(ax_arr, x_arr, y_arr, i0, i1, test_data)
             ArsParser.add_deltas(ax_arr, x_arr, y_arr, i0, i1, test_data)
 
@@ -930,7 +930,7 @@ class ArsParser:
         # print(threshold)
         print('Time windows near hover')
         print('  threshold %s' % threshold)
-        iwin1_arr, vwin1_arr = tstools.elements_satisfying_condition(
+        iwin1_arr, vwin1_arr = TSTools.elements_satisfying_condition(
             man_throttle, operator.gt, threshold)
         twin1_arr = []
         for iwin1 in iwin1_arr:
@@ -948,7 +948,7 @@ class ArsParser:
         alpha = 0.5
         threshold = man_min * (1 - alpha) + man_max * alpha
         print('  threshold %s' % threshold)
-        iwin2_arr, vwin2_arr = tstools.elements_satisfying_condition(
+        iwin2_arr, vwin2_arr = TSTools.elements_satisfying_condition(
             man_attnorm_arr, operator.le, threshold)
         twin2_arr = []
         for iwin2 in iwin2_arr:
@@ -963,7 +963,7 @@ class ArsParser:
             raise RuntimeError
         twin_data2d = []
         for twin1 in twin1_arr:
-            twin3_arr = tstools.overlapping_time_windows(
+            twin3_arr = TSTools.overlapping_time_windows(
                 [twin1], twin2_arr, min_delta=1.0)
             twin_data2d.append(twin3_arr)
         twin_data2d = np.array(twin_data2d, dtype=object)

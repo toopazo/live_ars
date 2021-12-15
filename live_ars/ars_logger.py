@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+import os
 # import numpy as np
 # import signal
 # import time
@@ -8,7 +9,12 @@ import sys
 from toopazo_tools.file_folder import FileFolderTools as FFTools
 from toopazo_tools.telemetry import TelemetryLogger
 # from kdecan_interface import KdeCanIface
-from ars_interface import ArsIface
+
+# Check if this is running inside toopazo_ulg/ or deployed as a module
+if os.path.isfile('ars_interface.py'):
+    from ars_interface import ArsIface
+else:
+    from live_ars.ars_interface import ArsIface
 
 
 class ArsIfaceWrapper:

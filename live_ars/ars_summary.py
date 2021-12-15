@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
+import os
 from toopazo_tools.matplotlib import plt
 
-from ars_dec22_data import ArsDec22Data
+# Check if this is running inside toopazo_ulg/ or deployed as a module
+if os.path.isfile('ars_dec22_data.py'):
+    from ars_dec22_data import ArsDec22Data
+else:
+    from live_ars.ars_dec22_data import ArsDec22Data
 
 import numpy as np
 import pickle
