@@ -89,7 +89,7 @@ class ArsIface:
         try:
             line = line.decode("utf-8")
         except UnicodeDecodeError:
-            return {'error': '[parse_line] unrecognized format'}
+            return {'error': f'[parse_line] unrecognized format for {line}'}
 
         # print(type(line))
         assert isinstance(line, str)
