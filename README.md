@@ -23,7 +23,7 @@ deactivate
 To run the code and start saving data to a log file in the 
 current directory, type
 ```shell
-python ars_logger.py .
+python ars_log.py .
 ```
 
 ## Plotting data from a log file
@@ -32,7 +32,7 @@ To plot data this repo makes us of
 Therefore, we need to indicate a filename to parse but also
 an index for our dataframe.
 ```shell
-python ars_plot_log.py filename index_col
+python ars_plot.py filename index_col
 ```
 Another option is to choose ```None``` and let 
 pandas generate and index.
