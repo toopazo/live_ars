@@ -1385,7 +1385,7 @@ class StrobeLightCalib(ArsParser):
     def __init__(self, motor):
         self.motor = motor
 
-        bdir = '/home/tzo4/Dropbox/tomas/pennState/avia/firefly_logBook/' \
+        bdir = '/home/tzo4/Dropbox/tomas/pennState_avia/firefly_logBook/' \
                '2020-12-21_ars_calibration'
         if motor == 3:
             # Firefly motors 3 statically tested in mocap studio (no blade)

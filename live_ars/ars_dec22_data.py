@@ -10,7 +10,7 @@ matplotlib.rcParams.update({'font.size': 18})
 
 
 class ArsDec22Data:
-    bdir = '/home/tzo4/Dropbox/tomas/pennState/avia/firefly_logBook/' \
+    bdir = '/home/tzo4/Dropbox/tomas/pennState_avia/firefly_logBook/' \
            '2020-12-22_firefly_mixer'
     test_db = {}
 
@@ -620,7 +620,7 @@ class ArsDec22DataSummary:
             ax_arr[1].set_xlim(xlim_arr)
             ax_arr[1].set_ylim([-10, 10])
 
-        jpgfile = '/home/tzo4/Dropbox/tomas/pennState/avia/' \
+        jpgfile = '/home/tzo4/Dropbox/tomas/pennState_avia/' \
                   'firefly_logBook/2020-12-22_firefly_mixer/plots/' + filename
         print('[plot] saving filename %s' % filename)
         plt.savefig(jpgfile)
@@ -681,7 +681,7 @@ class ArsDec22DataSummary:
         ax_arr[1].set(xlabel='Rotor speed ratio $\eta$',
                       ylabel='$\Delta$ rotor speed')
 
-        plt.savefig('/home/tzo4/Dropbox/tomas/pennState/avia/firefly_logBook/'
+        plt.savefig('/home/tzo4/Dropbox/tomas/pennState_avia/firefly_logBook/'
                     '2020-12-22_firefly_mixer/plots/' + 'eta_delta_equiv.jpg')
 
 

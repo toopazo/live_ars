@@ -182,7 +182,7 @@ class ArsSummary:
             ax_arr[1].set_xlim(xlim_arr)
             ax_arr[1].set_ylim([-10, 10])
 
-        jpgfile = '/home/tzo4/Dropbox/tomas/pennState/avia/' \
+        jpgfile = '/home/tzo4/Dropbox/tomas/pennState_avia/' \
                   'firefly_logBook/2020-12-22_firefly_mixer/plots/' + filename
         print('[plot] saving filename %s' % filename)
         plt.savefig(jpgfile)
