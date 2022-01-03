@@ -104,9 +104,9 @@ if __name__ == '__main__':
     if args.iacp:
         increment_setup_version()
         exec_cmd_and_report(['git', 'status'], decode=True)
-        exec_cmd_and_report(['git', 'add', '.'], decode=False)
+        exec_cmd_and_report(['git', 'add', '.'], decode=True)
         exec_cmd_and_report(['git', 'commit', '-m',
-                             '\"automated commit using iacp\"'], decode=False)
-        exec_cmd_and_report(['git', 'push'], decode=False)
+                             '\"automated commit using iacp\"'], decode=True)
+        exec_cmd_and_report(['git', 'push'], decode=True)
         exec_cmd_and_report(['git', 'status'], decode=True)
 
