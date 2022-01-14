@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="live_ars",    # Replace with your own username
-    version="0.0.10",
+    version="0.0.11",
     author="toopazo",
     author_email="toopazo@protonmail.com",
     description="Python package to communicate in real time with an Arduino equipped with current and rpm sensors",
