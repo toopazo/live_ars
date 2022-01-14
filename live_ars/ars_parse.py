@@ -34,11 +34,4 @@ class ArsParser:
     @staticmethod
     def get_pandas_dataframe(ars_file):
         ars_df = pandas.read_csv(ars_file, skipinitialspace=True)
-        print(ars_df)
-
-
-if __name__ == '__main__':
-    bdir = '/home/tzo4/Dropbox/tomas/pennState_avia/firefly_logBook/' \
-           '2021-12-15_hangar'
-    ars_log = 'log_2_2021-12-15-00-39-56.ars'
-    ArsParser.get_pandas_dataframe(f'{bdir}/logs/{ars_log}')
+        return ars_df
